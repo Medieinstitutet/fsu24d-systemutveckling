@@ -1,0 +1,20 @@
+{
+  "name": "fsu24d-lektioner",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongodb": "^6.15.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
