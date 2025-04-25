@@ -1,6 +1,7 @@
 import express from "express";
 import client from "./src/DatabaseConnection.js";
 import Product from "./src/shop/Product.js";
+import Order from "./src/shop/Order.js";
 
 let url = "mongodb://localhost:27017";
 
@@ -10,9 +11,15 @@ client.setup(url, "fsu24d");
 let connect = async function() {
     let app = express();
 
+    app.use(express.json());
+
     app.get("/", (req, res) => {
         res.send({"test": "test"});
     });
+
+    app.get("/api/", (req, res) => {
+      res.send({"test": "test"});
+  });
 
     app.get("/todo-list/:id/", async (req, res) => {
 
@@ -35,8 +42,47 @@ let connect = async function() {
       res.send(item);
     });
 
+    app.get("/api/products", async (req, res) => {
+      let products = await client.findAll("products");
+      res.send(products);
+    });
 
-    app.get("/products/", async (req, res) => {
+    app.post("/api/products", async (req, res) => {
+      let productsCollection = await client.getCollection("products");
+
+      console.log("body", req.body);
+
+      let result1 = await productsCollection.insertOne({"name": req.body.name, "price": req.body.price});
+      let result2 = await productsCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    app.get("/api/oop/products/add/", async (req, res) => {
+        let newProduct = new Product();
+
+        newProduct.name = "Test OOP";
+        newProduct.price = 123;
+
+        await newProduct.save();
+
+        newProduct.name = "Test OOP 2";
+        newProduct.price = 456;
+
+        await newProduct.save();
+
+        res.send({"id": newProduct.id});
+
+        let order = new Order();
+
+        let lineItem = order.addProduct(newProduct, 3);
+
+        lineItem.remove();
+        lineItem.setAmount(5);
+
+        order.save();
+    });
+
+    app.get("/api/oop/products/", async (req, res) => {
 
       /*
         let minPrice = 1*req.query.minPrice;

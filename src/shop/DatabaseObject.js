@@ -9,8 +9,23 @@ export default class DatabaseObject {
         return null;
     }
 
-    save() {
-        //METODO: implement this
+    getSaveData() {
+        console.warn("Does not have save data", this);
+        return {};
+    }
+
+    async save() {
+        let collection = await client.getCollection(this.getCollection());
+        let data = this.getSaveData();
+
+        if(this.id) {
+            await collection.updateOne({_id: this.id}, {$set: data})
+        }
+        else {
+            let result = await collection.insertOne(data);
+
+            this.id = result.insertedId;
+        }
     }
 
     async getDatabaseData() {

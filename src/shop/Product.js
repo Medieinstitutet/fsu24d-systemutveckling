@@ -31,6 +31,10 @@ export default class Product extends DatabaseObject {
         this.price = data.price;
     }
 
+    getSaveData() {
+        return {"name": this.name, "price": this.price};
+    }
+
     static async getAll() {
         let items = await client.findAll("products");
 
