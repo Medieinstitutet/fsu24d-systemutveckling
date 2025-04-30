@@ -26,10 +26,21 @@ export default class LineItemsObject extends DatabaseObject {
 
     addProduct(product, amount) {
         let newLineItem = new LineItem(product, amount);
+        newLineItem.id = Math.round(10000000000*Math.random()); //METODO: better id
         newLineItem.owner = this;
         this.lineItems.push(newLineItem);
 
         return newLineItem;
+    }
+
+    getLineItem(id) {
+        for(let i = 0; i < this.lineItems.length; i++) {
+            if(this.lineItems[i].id === id) {
+                return this.lineItems[i];
+            }
+        }
+
+        return null
     }
 
     removeLineItem(lineItem) {

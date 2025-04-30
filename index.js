@@ -2,6 +2,7 @@ import express from "express";
 import client from "./src/DatabaseConnection.js";
 import Product from "./src/shop/Product.js";
 import Order from "./src/shop/Order.js";
+import Cart from "./src/shop/Cart.js";
 
 let url = "mongodb://localhost:27017";
 
@@ -43,8 +44,46 @@ let connect = async function() {
     });
 
     app.get("/api/products", async (req, res) => {
+
+      //MEDEBUG: hardcoded
+
       let products = await client.findAll("products");
       res.send(products);
+
+      /*
+      let products = [
+        {
+          "_id": "67f8ff85687b137ada4e4f29",
+          "name": "Test product 1",
+          "description": "Awsome product",
+          "recommendedWith": "67f90924687b137ada4e4f2a",
+          "price": 250
+        }
+      ];
+
+      res.send(products);
+      */
+    });
+
+    app.get("/api/c/:collectionName/:id", async (req, res) => {
+
+      let collectionName = req.params.collectionName;
+
+      let documentId;
+      try{
+        documentId = client.toObjectId(req.params.id);
+      }
+      catch(theError) {
+        res.send(null);
+        return;
+      }
+
+      let filter = {
+        _id: documentId
+      };
+
+        let products = await client.findAll(collectionName, filter);
+        res.send(products[0]);
     });
 
     app.post("/api/products", async (req, res) => {
@@ -65,6 +104,7 @@ let connect = async function() {
 
         await newProduct.save();
 
+        /*
         newProduct.name = "Test OOP 2";
         newProduct.price = 456;
 
@@ -80,6 +120,7 @@ let connect = async function() {
         lineItem.setAmount(5);
 
         order.save();
+        */
     });
 
     app.get("/api/oop/products/", async (req, res) => {
@@ -102,6 +143,37 @@ let connect = async function() {
         })
 
         res.send(returnArray);
+    });
+
+    app.post("/cart/:id", async (req, res) => {
+
+        let cart = await Cart.getById(req.params.id);
+
+        let product = await Product.getById(req.body.productId);
+
+        let lineItem = cart.addProduct(product, req.body.amount);
+
+        await cart.save();
+
+        res.send(lineItem.id);
+    });
+
+    app.post("/cart/:id/:lineItemId", async (req, res) => {
+      let cart = awaitCart.getById(req.params.id);
+
+      let lineItem = cart.getLineItem(req.params.lineItemId);
+      lineItem.setAmount(req.body.amount);
+      cart.save();
+
+    });
+
+    app.delete("/cart/:id/:lineItemId", async (req, res) => {
+      let cart = awaitCart.getById(req.params.id);
+
+      let lineItem = cart.getLineItem(req.params.lineItemId);
+      lineItem.remove();
+      cart.save();
+      
     });
 
     app.get("/products/:id", async (req, res) => {

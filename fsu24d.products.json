@@ -1,0 +1,74 @@
+[{
+  "_id": {
+    "$oid": "67f8ff85687b137ada4e4f29"
+  },
+  "name": "Test product 1",
+  "description": "Awsome product",
+  "recommendedWith": {
+    "$oid": "67f90924687b137ada4e4f2a"
+  },
+  "price": 250
+},
+{
+  "_id": {
+    "$oid": "67f90924687b137ada4e4f2a"
+  },
+  "name": "Test product 2",
+  "price": 300
+},
+{
+  "_id": {
+    "$oid": "67f90ad1687b137ada4e4f2b"
+  },
+  "name": "Test product 3",
+  "price": 100
+},
+{
+  "_id": {
+    "$oid": "67f90c6b762100b8f0ca135b"
+  },
+  "name": "Test product 4",
+  "price": 400
+},
+{
+  "_id": {
+    "$oid": "67f90cb058ccc64bd15a5c43"
+  },
+  "name": "Test product 4",
+  "price": 400
+},
+{
+  "_id": {
+    "$oid": "680b5bfb3b706e83ff8d2476"
+  },
+  "name": "Test2",
+  "price": 123
+},
+{
+  "_id": {
+    "$oid": "680b5c183b706e83ff8d2477"
+  },
+  "name": "Test3",
+  "price": 345
+},
+{
+  "_id": {
+    "$oid": "680b6e055dff963c21784015"
+  },
+  "name": "Test OOP",
+  "price": 123
+},
+{
+  "_id": {
+    "$oid": "680b6e1e9a9998ac4ed513d4"
+  },
+  "name": "Test OOP",
+  "price": 123
+},
+{
+  "_id": {
+    "$oid": "680b6f8994e142e5a0bb316a"
+  },
+  "name": "Test OOP 2",
+  "price": 456
+}]

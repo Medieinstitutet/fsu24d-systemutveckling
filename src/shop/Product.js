@@ -49,4 +49,12 @@ export default class Product extends DatabaseObject {
 
         return products;
     }
+
+    static async getById(id) {
+        let newItem = new Product();
+        newItem.id = id;
+        await newItem.load();
+
+        return newItem;
+    }
 }
