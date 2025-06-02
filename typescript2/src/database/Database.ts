@@ -14,6 +14,8 @@ let connection = mysql.createPool({
 
 export default connection;
 
+export {connection};
+
 let getUsers = async():Promise<Project.models.User[]> => {
     let result = await connection.query("SELECT * from users");
 
