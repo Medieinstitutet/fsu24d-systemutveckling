@@ -9,7 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@types/express": "^5.0.2",
     "@types/node": "^22.15.21",
@@ -20,5 +19,6 @@
   "dependencies": {
     "express": "^5.1.0",
     "mysql2": "^3.14.1"
-  }
+  },
+  "description": ""
 }

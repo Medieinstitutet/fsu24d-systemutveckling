@@ -1,15 +1,15 @@
 import express from "express";
-import client from "./src/DatabaseConnection.js";
-import Product from "./src/shop/Product.js";
-import Order from "./src/shop/Order.js";
-import Cart from "./src/shop/Cart.js";
+import { MongoClient, ObjectId } from 'mongodb';
 
 let url = "mongodb://localhost:27017";
 
-//let client = new DatabaseConnection(url, "fsu24d");
-client.setup(url, "fsu24d");
+let dbConnection = new MongoClient(url);
 
 let connect = async function() {
+
+  await dbConnection.connect();
+  let database = dbConnection.db("fsu24d");
+
     let app = express();
 
     app.use(express.json());
@@ -22,261 +22,173 @@ let connect = async function() {
       res.send({"test": "test"});
   });
 
-    app.get("/todo-list/:id/", async (req, res) => {
+  app.get("/api/products", async (req, res) => {
+    let collection = database.collection("products");
 
-      let query = {list: client.toObjectId(req.params.id)};
-      let items = await client.findAll("todoItems", query);
+    let results = await collection.find().toArray();
 
-      res.send(items);
-    });
+    res.send(results);
+});
 
-    app.post("/todo-list/:id/", async (req, res) => {
-      let collection = await client.getCollection("todoItems");
+app.post("/api/products/add", async (req, res) => {
+  let collection = database.collection("products");
 
-      let item = await collection.insertOne({
-        "description": req.query.description,
-        "lastChangeBy": req.query.name,
-        "status": "open",
-        "list": client.toObjectId(req.params.id)
-      })
+  let insertObject = {
+    name: "Test 2",
+    price: 456
+  };
+  let result = await collection.insertOne(insertObject);
+  let object = await collection.findOne({_id: result.insertedId});
 
-      res.send(item);
-    });
+  res.send(object);
+});
 
-    app.get("/api/products", async (req, res) => {
+app.get("/api/products/:id/edit", async (req, res) => {
+  let collection = database.collection("products");
 
-      //MEDEBUG: hardcoded
+  let editData = {
+    name: "Test 3",
+    price: 678
+  };
+  
+  let id = new ObjectId(req.params.id);
+  let filter = {_id: id};
+  let operation = {$set: editData};
 
-      let products = await client.findAll("products");
-      res.send(products);
+  let result = await collection.updateOne(filter, operation);
+  let object = await collection.findOne({_id: id});
 
-      /*
-      let products = [
+  res.send(object);
+});
+
+app.get("/api/products/:id/delete", async (req, res) => {
+  let collection = database.collection("products");
+
+  let id = new ObjectId(req.params.id);
+  let filter = {_id: id};
+
+  let result = await collection.deleteOne(filter);
+
+  res.send(result);
+});
+
+app.get("/api/checkout", async (req, res) => {
+
+  let collection = database.collection("orders");
+  let productCollection = database.collection("products");
+
+  let items = [
+    {id: "68147189687b137ada4e4f64", quantity: 1},
+    {id: "681473ce2ede5ba0fd3b015c", quantity: 2},
+  ];
+
+  let customer = {
+    firstName: "M",
+    lastName: "E",
+    email: "m@example.com",
+    street: "",
+    city: ""
+  }
+
+  let encodedItems = [];
+  
+  for(let i = 0; i < items.length; i++) {
+    let item = items[i];
+    let returnObject = {...item};
+    let id = new ObjectId(item.id);
+    returnObject.id = id;
+
+    let product = await productCollection.findOne({_id: id});
+    returnObject.itemPrice = product.price;
+    encodedItems.push(returnObject);
+  }
+
+  let result = await collection.insertOne({"items": encodedItems, "customer": customer});
+  let object = await collection.findOne({_id: result.insertedId});
+  
+  res.send(object);
+});
+
+app.get("/api/orders", async (req, res) => {
+  let collection = database.collection("orders");
+  
+  let pipeline = [
+    {
+      $unwind:
+        /**
+         * path: Path to the array field.
+         * includeArrayIndex: Optional name for index.
+         * preserveNullAndEmptyArrays: Optional
+         *   toggle to unwind null and empty values.
+         */
         {
-          "_id": "67f8ff85687b137ada4e4f29",
-          "name": "Test product 1",
-          "description": "Awsome product",
-          "recommendedWith": "67f90924687b137ada4e4f2a",
-          "price": 250
+          path: "$items"
         }
-      ];
-
-      res.send(products);
-      */
-    });
-
-    app.get("/api/c/:collectionName/:id", async (req, res) => {
-
-      let collectionName = req.params.collectionName;
-
-      let documentId;
-      try{
-        documentId = client.toObjectId(req.params.id);
-      }
-      catch(theError) {
-        res.send(null);
-        return;
-      }
-
-      let filter = {
-        _id: documentId
-      };
-
-        let products = await client.findAll(collectionName, filter);
-        res.send(products[0]);
-    });
-
-    app.post("/api/products", async (req, res) => {
-      let productsCollection = await client.getCollection("products");
-
-      console.log("body", req.body);
-
-      let result1 = await productsCollection.insertOne({"name": req.body.name, "price": req.body.price});
-      let result2 = await productsCollection.insertOne(req.body);
-      res.send(result);
-    });
-
-    app.get("/api/oop/products/add/", async (req, res) => {
-        let newProduct = new Product();
-
-        newProduct.name = "Test OOP";
-        newProduct.price = 123;
-
-        await newProduct.save();
-
-        /*
-        newProduct.name = "Test OOP 2";
-        newProduct.price = 456;
-
-        await newProduct.save();
-
-        res.send({"id": newProduct.id});
-
-        let order = new Order();
-
-        let lineItem = order.addProduct(newProduct, 3);
-
-        lineItem.remove();
-        lineItem.setAmount(5);
-
-        order.save();
-        */
-    });
-
-    app.get("/api/oop/products/", async (req, res) => {
-
-      /*
-        let minPrice = 1*req.query.minPrice;
-
-        let query = {price: {$gt: minPrice}};
-        let products = await client.findAll("products", query);
-*/
-        let products = await Product.getAll();
-        console.log(products);
-
-        let returnArray = products.map((product) => {
-          return {
-            id: product.id,
-            name: product.getName(),
-            price: product.getPrice()
+    },
+    {
+      $lookup:
+        /**
+         * from: The target collection.
+         * localField: The local join field.
+         * foreignField: The target join field.
+         * as: The name for the results.
+         * pipeline: Optional pipeline to run on the foreign collection.
+         * let: Optional variables to use in the pipeline field stages.
+         */
+        {
+          from: "products",
+          localField: "items.id",
+          foreignField: "_id",
+          as: "items.product"
+        }
+    },
+    {
+      $unwind:
+        /**
+         * path: Path to the array field.
+         * includeArrayIndex: Optional name for index.
+         * preserveNullAndEmptyArrays: Optional
+         *   toggle to unwind null and empty values.
+         */
+        {
+          path: "$items.product"
+        }
+    },
+    {
+      $project:
+        /**
+         * specifications: The fields to
+         *   include or exclude.
+         */
+        {
+          "items.id": 0
+        }
+    },
+    {
+      $group:
+        /**
+         * _id: The id of the group.
+         * fieldN: The first field name.
+         */
+        {
+          _id: "$_id",
+          item: {
+            $push: "$items"
+          },
+          customer: {
+            $first: "$customer"
           }
-        })
-
-        res.send(returnArray);
-    });
-
-    app.post("/cart/:id", async (req, res) => {
-
-        let cart = await Cart.getById(req.params.id);
-
-        let product = await Product.getById(req.body.productId);
-
-        let lineItem = cart.addProduct(product, req.body.amount);
-
-        await cart.save();
-
-        res.send(lineItem.id);
-    });
-
-    app.post("/cart/:id/:lineItemId", async (req, res) => {
-      let cart = awaitCart.getById(req.params.id);
-
-      let lineItem = cart.getLineItem(req.params.lineItemId);
-      lineItem.setAmount(req.body.amount);
-      cart.save();
-
-    });
-
-    app.delete("/cart/:id/:lineItemId", async (req, res) => {
-      let cart = awaitCart.getById(req.params.id);
-
-      let lineItem = cart.getLineItem(req.params.lineItemId);
-      lineItem.remove();
-      cart.save();
-      
-    });
-
-    app.get("/products/:id", async (req, res) => {
-        let product = new Product();
-
-        product.id = client.toObjectId(req.params.id);
-
-        await product.load();
-        
-        res.send({
-          id: product.id,
-          name: product.getName(),
-          price: product.getPrice()
-        });
-    });
-
-    app.get("/reviews/", async (req, res) => {
-
-        let reviewsCollection = await client.getCollection("reviews");
-
-        /*
-        let productsCollection = database.collection("products");
-        let usersCollection = database.collection("users");
-
-        let query = {};
-        let reviews = await reviewsCollection.find(query).toArray();
-
-        for(let i = 0; i < reviews.length; i++) {
-            let review = reviews[i];
-
-            {
-                let productId = review.product;
-
-                let query = {_id: productId};
-                let products = await productsCollection.find(query).toArray();
-    
-                review.product = products[0];
-            }
-            
-            {
-                let query = {_id: review.user};
-                let users = await usersCollection.find(query).toArray();
-
-                let user = users[0];
-
-                delete user["_id"];
-    
-                review.user = user;
-            }
-            
         }
-        */
+    }
+  ];
+  let results = await collection.aggregate(pipeline).toArray();
 
-        let reviews = await reviewsCollection.aggregate(
-            [
-              {
-                $match: {
-                  product: client.toObjectId(
-                    '67f90924687b137ada4e4f2a'
-                  )
-                }
-              },
-              {
-                $lookup: {
-                  from: 'products',
-                  localField: 'product',
-                  foreignField: '_id',
-                  as: 'product'
-                }
-              },
-              { $unwind: { path: '$product' } },
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'user',
-                  foreignField: '_id',
-                  as: 'user'
-                }
-              },
-              { $unwind: { path: '$user' } },
-              { $project: { 'user._id': 0 } }
-            ],
-            { maxTimeMS: 60000, allowDiskUse: true }
-          ).toArray();
-
-        res.send(reviews);
-    });
+  res.send(results);
+});
 
     app.listen(4000, () => {
         console.log("Server started");
     });
-
-    /*
-    
-
-    
-    console.log("result", products);
-
-    //await productsCollection.insertOne({name: "Test product 4", price: 400})
-
-    products.map((item) => {
-        console.log(item.name);
-    })*/
 }
 
 connect();
